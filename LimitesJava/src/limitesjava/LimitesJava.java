@@ -36,18 +36,34 @@ public class LimitesJava extends Application {
         // Botón para activar la acción de graficar
         Button botonGraficar = new Button("Calcular límite");
 
+        // Botones para proceso de zoom
+        Button botonAlejar = new Button("Alejar Grafica");
+        Button botonAcercar = new Button("Acercar Grafica");
+        
         // Crear ejes para el gráfico: uno para x y otro para f(x)
         NumberAxis ejeEnX = new NumberAxis();
         NumberAxis ejeEnY = new NumberAxis();
         ejeEnX.setLabel("x");
         ejeEnY.setLabel("f(x)");
+        
+        // Evita que se redimensionen
+        ejeEnX.setAutoRanging(false);
+        ejeEnY.setAutoRanging(false);
+        
+        ejeEnX.setLowerBound(-10);
+        ejeEnX.setUpperBound(10);
+        ejeEnX.setTickUnit(1);
+
+        ejeEnY.setLowerBound(-10);
+        ejeEnY.setUpperBound(10);
+        ejeEnY.setTickUnit(1);
 
         // Crear el gráfico de líneas con los ejes
         LineChart<Number, Number> lineChart = new LineChart<>(ejeEnX, ejeEnY);
         lineChart.setTitle("Gráfica de f(x)");
 
         // Organizar los campos de entrada y el botón verticalmente con separación de 10 píxeles
-        VBox containerDatos = new VBox(10, EtiquetaFuncion, entradaFuncion, etiquetaValorEnX, entradaValorEnX, botonGraficar);
+        VBox containerDatos = new VBox(10, EtiquetaFuncion, entradaFuncion, etiquetaValorEnX, entradaValorEnX, botonGraficar, botonAlejar, botonAcercar);
         containerDatos.setStyle("-fx-padding: 20px; -fx-alignment: center;");
 
         // Acción cuando se presiona el botón "Graficar"
@@ -109,6 +125,41 @@ public class LimitesJava extends Application {
                 // Mostrar un mensaje de error si algo falla al evaluar o graficar
                 new Alert(Alert.AlertType.ERROR, "Error al graficar: " + ex.getMessage()).show();
             }
+        });
+
+        // Acciones de botones para alejar o acercar grafica
+        botonAlejar.setOnAction(event -> {
+            double zoomFactor = 1.1;
+            double centerX = ejeEnX.getLowerBound() + (ejeEnX.getUpperBound() - ejeEnX.getLowerBound()) / 2;
+            double centerY = ejeEnY.getLowerBound() + (ejeEnY.getUpperBound() - ejeEnY.getLowerBound()) / 2;
+
+            double nuevoAnchoX = (ejeEnX.getUpperBound() - ejeEnX.getLowerBound()) * zoomFactor;
+            double nuevoAnchoY = (ejeEnY.getUpperBound() - ejeEnY.getLowerBound()) * zoomFactor;
+
+            ejeEnX.setLowerBound(centerX - nuevoAnchoX / 2);
+            ejeEnX.setUpperBound(centerX + nuevoAnchoX / 2);
+            ejeEnX.setTickUnit(nuevoAnchoX / 10);  // Actualiza la unidad de grilla
+
+            ejeEnY.setLowerBound(centerY - nuevoAnchoY / 2);
+            ejeEnY.setUpperBound(centerY + nuevoAnchoY / 2);
+            ejeEnY.setTickUnit(nuevoAnchoY / 10);
+        });
+        
+        botonAcercar.setOnAction(event -> {
+            double zoomFactor = 0.9;
+            double centerX = ejeEnX.getLowerBound() + (ejeEnX.getUpperBound() - ejeEnX.getLowerBound()) / 2;
+            double centerY = ejeEnY.getLowerBound() + (ejeEnY.getUpperBound() - ejeEnY.getLowerBound()) / 2;
+
+            double nuevoAnchoX = (ejeEnX.getUpperBound() - ejeEnX.getLowerBound()) * zoomFactor;
+            double nuevoAnchoY = (ejeEnY.getUpperBound() - ejeEnY.getLowerBound()) * zoomFactor;
+
+            ejeEnX.setLowerBound(centerX - nuevoAnchoX / 2);
+            ejeEnX.setUpperBound(centerX + nuevoAnchoX / 2);
+            ejeEnX.setTickUnit(nuevoAnchoX / 10);  // Actualiza la unidad de grilla
+
+            ejeEnY.setLowerBound(centerY - nuevoAnchoY / 2);
+            ejeEnY.setUpperBound(centerY + nuevoAnchoY / 2);
+            ejeEnY.setTickUnit(nuevoAnchoY / 10);  // Lo mismo para el eje Y
         });
 
         // Panel principal que organiza los controles a la izquierda y el gráfico al centro
