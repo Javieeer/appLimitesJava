@@ -3,6 +3,7 @@ package limitesjava;
 
 // Importaciones de JavaFX para la interfaz gráfica
 import javafx.application.Application;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
@@ -52,7 +53,9 @@ public class LimitesJava extends Application {
         // Acción cuando se presiona el botón "Graficar"
         botonGraficar.setOnAction(e -> {
             try {
+                // Actualizar titulo para el valor ingresado
                 lineChart.setTitle("Gráfica de f(x) cuando x tiende a: " + entradaValorEnX.getText());
+                
                 // Obtener los valores ingresados
                 String funcion = entradaFuncion.getText();
                 double valorEnX = Double.parseDouble(entradaValorEnX.getText());
@@ -67,17 +70,42 @@ public class LimitesJava extends Application {
                 XYChart.Series<Number, Number> series = new XYChart.Series<>();
                 series.setName("f(x)");
 
-                // Generar puntos desde valorEnX-1 hasta valorEnX+1, en pasos de 0.5
-                for (double x = valorEnX - 100; x <= valorEnX + 100; x += 0.5) {
+                // Generar puntos desde valorEnX-50 hasta valorEnX+50, en pasos de 0.5
+                for (double x = valorEnX - 50; x <= valorEnX + 50; x += 0.5) {
                     double y = formula.setVariable("x", x).evaluate();  // Evaluar f(x)
                     series.getData().add(new XYChart.Data<>(x, y));  // Agregar punto (x, f(x))
                 }
+                
+                // Calcular el límite (valor de f(x) en x = valorEnX)
+                double valorLimite = formula.setVariable("x", valorEnX).evaluate();
 
-                // Agregar la serie al gráfico
-                lineChart.getData().add(series);
-                lineChart.setCreateSymbols(false);
+                // Ubicar solamente el limite
+                XYChart.Series<Number, Number> serieLimite = new XYChart.Series<>();
+                serieLimite.setName("Límite en x → " + valorEnX);
+                serieLimite.getData().add(new XYChart.Data<>(valorEnX, valorLimite));
+                
+                // Agregar ambas series al gráfico
+                lineChart.getData().addAll(series, serieLimite);
+                lineChart.setCreateSymbols(true); //Muestra los puntos de las dos graficas sin discriminar
+               
 
-            } catch (Exception ex) {
+                // Estilo para ocultar los símbolos de la primera serie (la función)
+                series.getNode().lookup(".chart-series-line").setStyle("-fx-stroke-width: 1;");
+                for (XYChart.Data<Number, Number> data : series.getData()) {
+                    Node node = data.getNode();
+                    if (node != null) {
+                        node.setStyle("-fx-background-color: transparent;"); // Oculta el símbolo
+                    }
+                }
+
+                Alert alertaResultado = new Alert(Alert.AlertType.INFORMATION);
+                alertaResultado.setTitle("Resultado");
+                alertaResultado.setHeaderText("Cálculo exitoso");
+                alertaResultado.setContentText("El valor del límite cuando x → " + valorEnX + " es: " + valorLimite);
+                alertaResultado.show();
+
+            } 
+            catch (Exception ex) {
                 // Mostrar un mensaje de error si algo falla al evaluar o graficar
                 new Alert(Alert.AlertType.ERROR, "Error al graficar: " + ex.getMessage()).show();
             }
