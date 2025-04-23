@@ -1,5 +1,7 @@
+// Paquete del proyecto
 package limitesjava;
 
+// Importaciones de JavaFX para la interfaz gráfica
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
@@ -8,81 +10,93 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+
+// Importación de exp4j para evaluar expresiones matemáticas
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 
+// Clase principal que extiende Application de JavaFX
 public class LimitesJava extends Application {
 
+    // Método principal de JavaFX, se ejecuta al iniciar la aplicación
     @Override
     public void start(Stage stage) {
-        // Crear los controles para ingresar la función y el valor de x
-        Label funcionLabel = new Label("Función f(x):");
-        TextField funcionField = new TextField();
-        funcionField.setPromptText("Ej. x^2");
+        
+        // Crear etiqueta y campo de texto para ingresar la función f(x)
+        Label EtiquetaFuncion = new Label("Ingrese la función f(x):");
+        TextField entradaFuncion = new TextField();
+        entradaFuncion.setPromptText("Ej. x^2-3x-4");  // Texto de ejemplo
 
-        Label valorXLabel = new Label("Valor de x:");
-        TextField valorXField = new TextField();
-        valorXField.setPromptText("Ej. 2");
+        // Crear etiqueta y campo de texto para ingresar el valor al que tiende x
+        Label etiquetaValorEnX = new Label("Valor de x:");
+        TextField entradaValorEnX = new TextField();
+        entradaValorEnX.setPromptText("Ej. 2");  // Texto de ejemplo
 
-        Button graficarBtn = new Button("Graficar límite");
+        // Botón para activar la acción de graficar
+        Button botonGraficar = new Button("Calcular límite");
 
-        // Ejes del gráfico
-        NumberAxis xAxis = new NumberAxis();
-        NumberAxis yAxis = new NumberAxis();
-        xAxis.setLabel("x");
-        yAxis.setLabel("f(x)");
+        // Crear ejes para el gráfico: uno para x y otro para f(x)
+        NumberAxis ejeEnX = new NumberAxis();
+        NumberAxis ejeEnY = new NumberAxis();
+        ejeEnX.setLabel("x");
+        ejeEnY.setLabel("f(x)");
 
-        // Crear el gráfico
-        LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
+        // Crear el gráfico de líneas con los ejes
+        LineChart<Number, Number> lineChart = new LineChart<>(ejeEnX, ejeEnY);
         lineChart.setTitle("Gráfica de f(x)");
 
-        // Layout
-        VBox inputLayout = new VBox(10, funcionLabel, funcionField, valorXLabel, valorXField, graficarBtn);
-        inputLayout.setStyle("-fx-padding: 20px; -fx-alignment: center;");
+        // Organizar los campos de entrada y el botón verticalmente con separación de 10 píxeles
+        VBox containerDatos = new VBox(10, EtiquetaFuncion, entradaFuncion, etiquetaValorEnX, entradaValorEnX, botonGraficar);
+        containerDatos.setStyle("-fx-padding: 20px; -fx-alignment: center;");
 
-        // Acción del botón "Graficar"
-        graficarBtn.setOnAction(e -> {
+        // Acción cuando se presiona el botón "Graficar"
+        botonGraficar.setOnAction(e -> {
             try {
-                // Obtener la función y el valor de x
-                String funcion = funcionField.getText();
-                double x0 = Double.parseDouble(valorXField.getText());
+                lineChart.setTitle("Gráfica de f(x) cuando x tiende a: " + entradaValorEnX.getText());
+                // Obtener los valores ingresados
+                String funcion = entradaFuncion.getText();
+                double valorEnX = Double.parseDouble(entradaValorEnX.getText());
 
-                // Crear la expresión
-                Expression expr = new ExpressionBuilder(funcion).variable("x").build();
+                // Construir la expresión matematica usando exp4j
+                Expression formula = new ExpressionBuilder(funcion).variable("x").build();
 
-                // Limpiar los datos previos del gráfico
+                // Limpiar datos anteriores del gráfico
                 lineChart.getData().clear();
 
-                // Serie de datos para graficar
+                // Crear una serie de datos para la función f(x)
                 XYChart.Series<Number, Number> series = new XYChart.Series<>();
                 series.setName("f(x)");
 
-                // Generación de puntos para graficar
-                for (double x = x0 - 1; x <= x0 + 1; x += 0.1) {
-                    double y = expr.setVariable("x", x).evaluate();
-                    series.getData().add(new XYChart.Data<>(x, y));
+                // Generar puntos desde valorEnX-1 hasta valorEnX+1, en pasos de 0.5
+                for (double x = valorEnX - 100; x <= valorEnX + 100; x += 0.5) {
+                    double y = formula.setVariable("x", x).evaluate();  // Evaluar f(x)
+                    series.getData().add(new XYChart.Data<>(x, y));  // Agregar punto (x, f(x))
                 }
 
                 // Agregar la serie al gráfico
                 lineChart.getData().add(series);
+                lineChart.setCreateSymbols(false);
+
             } catch (Exception ex) {
+                // Mostrar un mensaje de error si algo falla al evaluar o graficar
                 new Alert(Alert.AlertType.ERROR, "Error al graficar: " + ex.getMessage()).show();
             }
         });
 
-        // Panel principal con los controles y el gráfico
+        // Panel principal que organiza los controles a la izquierda y el gráfico al centro
         BorderPane root = new BorderPane();
-        root.setLeft(inputLayout);
+        root.setLeft(containerDatos);
         root.setCenter(lineChart);
 
-        // Crear y mostrar la escena
-        Scene scene = new Scene(root, 800, 600);
-        stage.setTitle("Gráfico de Función");
+        // Crear la escena y mostrarla en la ventana (stage)
+        Scene scene = new Scene(root, 800, 600);  // Tamaño de ventana
+        stage.setTitle("Gráfico de Función hecho por el mejor CIPAS");
         stage.setScene(scene);
-        stage.show();
+        stage.show();  // Mostrar ventana
     }
 
+    // Método main, punto de entrada estándar en Java
     public static void main(String[] args) {
-        launch(args);
+        launch(args);  // Lanza la aplicación JavaFX
     }
 }
