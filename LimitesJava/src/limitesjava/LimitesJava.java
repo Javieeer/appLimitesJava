@@ -18,15 +18,15 @@ import org.mariuszgromada.math.mxparser.Argument;
 
 public class LimitesJava extends Application {
 
-    private double xInicialInferior;
-    private double xInicialSuperior;
-    private double yInicialInferior;
-    private double yInicialSuperior;
-    private double tickUnitXInicial;
-    private double tickUnitYInicial;
-
     @Override
     public void start(Stage stage) {
+        
+        double xInicialInferior;
+        double xInicialSuperior;
+        double yInicialInferior;
+        double yInicialSuperior;
+        double tickUnitXInicial;
+        double tickUnitYInicial;
 
         // Crear etiqueta y campo de texto para ingresar la función f(x)
         Label EtiquetaFuncion = new Label("Ingrese la función f(x):");
@@ -123,7 +123,7 @@ public class LimitesJava extends Application {
                 lineChart.setTitle("Gráfica de f(x) cuando x tiende a: " + entradaValorEnX.getText());
                 
                 // Lee la función ingresada y el valor en X para procesarlos
-                String funcion = entradaFuncion.getText();
+                String funcion = entradaFuncion.getText().toLowerCase();
                 double valorEnX = Double.parseDouble(entradaValorEnX.getText());
 
                 // Definir la variable x que se utilizará en la expresión
@@ -151,14 +151,12 @@ public class LimitesJava extends Application {
 
                 String mensaje;
                 // Comparar los límites laterales con un umbral de diferencia 
-                if (Math.abs(izquierda - derecha) < 1e-2) {
+                if (Math.abs(izquierda - derecha) < 1e-2) { 
                     // Si los valores laterales son cercanos, se calcula el límite como promedio
                     double limite = (izquierda + derecha) / 2;
                     mensaje = "El valor del límite cuando x → " + valorEnX + " es: " + String.format("%.6f", limite);
                 } else {
-                    mensaje = "El límite es indefinido o no existe.\n"
-                            + "Desde la izquierda: " + izquierda + "\n"
-                            + "Desde la derecha: " + derecha;
+                    mensaje = "El límite es indefinido o no existe.\nDesde la izquierda: " + izquierda + "\nDesde la derecha: " + derecha;
                 }
 
                 // Mostrar el resultado en la gráfica como una nueva serie
