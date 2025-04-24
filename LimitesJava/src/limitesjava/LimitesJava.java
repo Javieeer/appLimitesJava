@@ -19,6 +19,12 @@ import net.objecthunter.exp4j.ExpressionBuilder;
 // Clase principal que extiende Application de JavaFX
 public class LimitesJava extends Application {
 
+    private double xInicialInferior;
+    private double xInicialSuperior;
+    private double yInicialInferior;
+    private double yInicialSuperior;
+    private double tickUnitXInicial;
+    private double tickUnitYInicial;
     // Método principal de JavaFX, se ejecuta al iniciar la aplicación
     @Override
     public void start(Stage stage) {
@@ -37,8 +43,9 @@ public class LimitesJava extends Application {
         Button botonGraficar = new Button("Calcular límite");
 
         // Botones para proceso de zoom
-        Button botonAlejar = new Button("Alejar Grafica");
-        Button botonAcercar = new Button("Acercar Grafica");
+        Button botonAlejar = new Button("ZOOM(-)");
+        Button botonAcercar = new Button("ZOOM(+)");
+        Button botonResetZoom = new Button("ZOOM(Original)");
         
         // Crear ejes para el gráfico: uno para x y otro para f(x)
         NumberAxis ejeEnX = new NumberAxis();
@@ -57,15 +64,58 @@ public class LimitesJava extends Application {
         ejeEnY.setLowerBound(-10);
         ejeEnY.setUpperBound(10);
         ejeEnY.setTickUnit(1);
+        
+        // Guardar valores originales
+        xInicialInferior = ejeEnX.getLowerBound();
+        xInicialSuperior = ejeEnX.getUpperBound();
+        tickUnitXInicial = ejeEnX.getTickUnit();
+
+        yInicialInferior = ejeEnY.getLowerBound();
+        yInicialSuperior = ejeEnY.getUpperBound();
+        tickUnitYInicial = ejeEnY.getTickUnit();
 
         // Crear el gráfico de líneas con los ejes
         LineChart<Number, Number> lineChart = new LineChart<>(ejeEnX, ejeEnY);
         lineChart.setTitle("Gráfica de f(x)");
+        
+        // Necesario para dejar que el mouse presionado mueva la gráfica
+        final double[] mouseAnchorX = new double[1];
+        final double[] mouseAnchorY = new double[1];
+        
+        // Acción de oprimir el mouse dentro de la gráfica
+        lineChart.setOnMousePressed(event -> {
+            mouseAnchorX[0] = event.getX();
+            mouseAnchorY[0] = event.getY();
+        });
+        
+        // Acción de soltar el click dentro de la gráfica
+        lineChart.setOnMouseDragged(event -> {
+            double deltaX = event.getX() - mouseAnchorX[0];
+            double deltaY = event.getY() - mouseAnchorY[0];
 
+            double rangeX = ejeEnX.getUpperBound() - ejeEnX.getLowerBound();
+            double rangeY = ejeEnY.getUpperBound() - ejeEnY.getLowerBound();
+
+            double shiftX = deltaX / lineChart.getWidth() * rangeX;
+            double shiftY = -deltaY / lineChart.getHeight() * rangeY;
+
+            ejeEnX.setLowerBound(ejeEnX.getLowerBound() - shiftX);
+            ejeEnX.setUpperBound(ejeEnX.getUpperBound() - shiftX);
+            ejeEnY.setLowerBound(ejeEnY.getLowerBound() - shiftY);
+            ejeEnY.setUpperBound(ejeEnY.getUpperBound() - shiftY);
+
+            mouseAnchorX[0] = event.getX();
+            mouseAnchorY[0] = event.getY();
+        });
+        
         // Organizar los campos de entrada y el botón verticalmente con separación de 10 píxeles
-        VBox containerDatos = new VBox(10, EtiquetaFuncion, entradaFuncion, etiquetaValorEnX, entradaValorEnX, botonGraficar, botonAlejar, botonAcercar);
+        HBox containerBotones = new HBox(10, botonAcercar, botonAlejar);
+        containerBotones.setStyle("-fx-aligment: center;");
+        
+        VBox containerDatos = new VBox(10, EtiquetaFuncion, entradaFuncion, etiquetaValorEnX, entradaValorEnX, botonGraficar, containerBotones, botonResetZoom);
         containerDatos.setStyle("-fx-padding: 20px; -fx-alignment: center;");
-
+        
+        
         // Acción cuando se presiona el botón "Graficar"
         botonGraficar.setOnAction(e -> {
             try {
@@ -86,8 +136,8 @@ public class LimitesJava extends Application {
                 XYChart.Series<Number, Number> series = new XYChart.Series<>();
                 series.setName("f(x)");
 
-                // Generar puntos desde valorEnX-50 hasta valorEnX+50, en pasos de 0.5
-                for (double x = valorEnX - 50; x <= valorEnX + 50; x += 0.5) {
+                // Generar puntos desde valorEnX-50 hasta valorEnX+50, en pasos de 0.1
+                for (double x = valorEnX - 50; x <= valorEnX + 50; x += 0.1) {
                     double y = formula.setVariable("x", x).evaluate();  // Evaluar f(x)
                     series.getData().add(new XYChart.Data<>(x, y));  // Agregar punto (x, f(x))
                 }
@@ -127,9 +177,9 @@ public class LimitesJava extends Application {
             }
         });
 
-        // Acciones de botones para alejar o acercar grafica
+        // Acción de alejar grafica
         botonAlejar.setOnAction(event -> {
-            double zoomFactor = 1.1;
+            double zoomFactor = 1.5;
             double centerX = ejeEnX.getLowerBound() + (ejeEnX.getUpperBound() - ejeEnX.getLowerBound()) / 2;
             double centerY = ejeEnY.getLowerBound() + (ejeEnY.getUpperBound() - ejeEnY.getLowerBound()) / 2;
 
@@ -145,8 +195,9 @@ public class LimitesJava extends Application {
             ejeEnY.setTickUnit(nuevoAnchoY / 10);
         });
         
+        // Acción de acercar grafica
         botonAcercar.setOnAction(event -> {
-            double zoomFactor = 0.9;
+            double zoomFactor = 0.5;
             double centerX = ejeEnX.getLowerBound() + (ejeEnX.getUpperBound() - ejeEnX.getLowerBound()) / 2;
             double centerY = ejeEnY.getLowerBound() + (ejeEnY.getUpperBound() - ejeEnY.getLowerBound()) / 2;
 
@@ -160,6 +211,17 @@ public class LimitesJava extends Application {
             ejeEnY.setLowerBound(centerY - nuevoAnchoY / 2);
             ejeEnY.setUpperBound(centerY + nuevoAnchoY / 2);
             ejeEnY.setTickUnit(nuevoAnchoY / 10);  // Lo mismo para el eje Y
+        });
+        
+        // Acción de restablecer zoom de grafica
+        botonResetZoom.setOnAction(event -> {
+            ejeEnX.setLowerBound(xInicialInferior);
+            ejeEnX.setUpperBound(xInicialSuperior);
+            ejeEnX.setTickUnit(tickUnitXInicial);
+
+            ejeEnY.setLowerBound(yInicialInferior);
+            ejeEnY.setUpperBound(yInicialSuperior);
+            ejeEnY.setTickUnit(tickUnitYInicial);
         });
 
         // Panel principal que organiza los controles a la izquierda y el gráfico al centro
