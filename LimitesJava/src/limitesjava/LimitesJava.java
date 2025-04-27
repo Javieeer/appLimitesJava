@@ -126,20 +126,63 @@ public class LimitesJava extends Application {
                 String funcion = entradaFuncion.getText().toLowerCase();
                 double valorEnX = Double.parseDouble(entradaValorEnX.getText());
 
+                // Identificamos si la función ingresada tiene denominador
+                String denominador = "";
+                if ( funcion.contains("/") ){
+                    int posicionBarra = funcion.indexOf("/");
+                    denominador = funcion.substring(posicionBarra + 1).trim();
+                }
+                
                 // Definir la variable x que se utilizará en la expresión
                 Argument x = new Argument("x = 0");
                 Expression expr = new Expression(funcion, x);
 
+                // Pequeño margen para evitar división entre cero
+                double epsilon = 1e-5; 
+                
                 // Limpiar datos previos y crear la serie para la gráfica
                 lineChart.getData().clear();
                 XYChart.Series<Number, Number> series = new XYChart.Series<>();
                 series.setName("f(x)");
 
+                // Creamos la expresion del denominador para evaluar en caso de haber denominador
+                Expression exprDenominador = null;
+                if ( !denominador.isEmpty() ){
+                    exprDenominador = new Expression(denominador, x);
+                }
+                
                 // Graficar la función en el rango de x
                 for (double i = valorEnX - 50; i <= valorEnX + 50; i += 0.1) {
                     x.setArgumentValue(i);
+                    
+                    // Nos aseguramos de tener denominador antes de evaluarlo
+                    if ( exprDenominador != null ){    
+                        
+                        // Evaluamos el denominador
+                        double valorDenominador = exprDenominador.calculate();
+                        
+                        //Si el denominador es muuuy cercano a 0 dejamos de graficar
+                        if (Math.abs(valorDenominador) < epsilon) {
+                            
+                            // Cuando el denominador es casi cero, cortar la serie
+                            if (!series.getData().isEmpty()) {
+                                lineChart.getData().add(series);
+                                series = new XYChart.Series<>();
+                            }
+                            continue; // Saltar esta 'i'
+                        }
+                    }
+                    
+                    // Evaluar normalmente la función
                     double y = expr.calculate();
-                    series.getData().add(new XYChart.Data<>(i, y));   
+                    if ( Double.isFinite(y) ) {
+                        series.getData().add( new XYChart.Data<>(i, y) );
+                    }
+                }
+                
+                // Agregar la última serie al gráfico
+                if ( !series.getData().isEmpty() ) {
+                    lineChart.getData().add( series );
                 }
 
                 // Evaluación aproximada del límite usando valores cercanos por izquierda y derecha
@@ -150,29 +193,40 @@ public class LimitesJava extends Application {
                 double derecha = expr.calculate();
 
                 String mensaje;
+                double limiteAproximado;
                 // Comparar los límites laterales con un umbral de diferencia 
                 if (Math.abs(izquierda - derecha) < 1e-2) { 
                     // Si los valores laterales son cercanos, se calcula el límite como promedio
-                    double limite = (izquierda + derecha) / 2;
-                    mensaje = "El valor del límite cuando x → " + valorEnX + " es: " + String.format("%.6f", limite);
+                    limiteAproximado = (izquierda + derecha) / 2;
+                    mensaje = "El valor del límite cuando x → " + valorEnX + " es: " + String.format("%.6f", limiteAproximado);
                 } else {
+                    limiteAproximado = Double.NaN;
                     mensaje = "El límite es indefinido o no existe.\nDesde la izquierda: " + izquierda + "\nDesde la derecha: " + derecha;
                 }
-
+                
                 // Mostrar el resultado en la gráfica como una nueva serie
                 XYChart.Series<Number, Number> serieLimite = new XYChart.Series<>();
                 serieLimite.setName("Aproximación al límite");
-                serieLimite.getData().add(new XYChart.Data<>(valorEnX, (izquierda + derecha) / 2));
-                lineChart.getData().addAll(series, serieLimite);
-                lineChart.setCreateSymbols(true);
-
-                // Ajustar el estilo de la línea de la gráfica
-                series.getNode().lookup(".chart-series-line").setStyle("-fx-stroke-width: 1;");
-                for (XYChart.Data<Number, Number> data : series.getData()) {
-                    Node node = data.getNode();
-                    if (node != null) node.setStyle("-fx-background-color: transparent;");
+                
+                if ( !Double.isNaN( limiteAproximado ) ){
+                    serieLimite.getData().add( new XYChart.Data<>( valorEnX, limiteAproximado ) );
+                    lineChart.getData().add(serieLimite);
                 }
-
+                
+                lineChart.setCreateSymbols(true);
+                
+                // Ocultamos nodos de la función normal
+                for ( XYChart.Series<Number, Number> s : lineChart.getData() ){
+                    if ( !s.equals(serieLimite) ){
+                        for ( XYChart.Data<Number, Number> data : s.getData() ){
+                            Node node = data.getNode();
+                            if ( node != null ){
+                                node.setStyle("-fx-background-color: transparent;");
+                            }
+                        }
+                    }
+                }
+                
                 // Mostrar un mensaje con el resultado del cálculo
                 Alert alertaResultado = new Alert(Alert.AlertType.INFORMATION);
                 alertaResultado.setTitle("Resultado");
